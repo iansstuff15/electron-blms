@@ -1,0 +1,16 @@
+.content_container{
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    column-gap: 1rem;
+    row-gap: 1rem;
+    .textarea{
+        width: 100%;
+        background-color: blue;
+        grid-column: 1 / span 2;
+    }
+}
+.deliveryDetailsContainer{
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    margin: 2rem 0;
+}

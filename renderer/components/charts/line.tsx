@@ -1,0 +1,37 @@
+import dynamic from 'next/dynamic';
+const Area = dynamic(() => import('@ant-design/plots').then(({ Area }) => Area),
+    { ssr: false }
+);
+
+import { useEffect, useState } from 'react';
+const Line = () =>{
+    const [data, setData] = useState([]);
+
+    useEffect(() => {
+      asyncFetch();
+    }, []);
+    const asyncFetch = () => {
+        fetch('https://gw.alipayobjects.com/os/bmw-prod/b21e7336-0b3e-486c-9070-612ede49284e.json')
+          .then((response) => response.json())
+          .then((json) => setData(json))
+          .catch((error) => {
+            console.log('fetch data failed', error);
+          });
+      };
+      const config = {
+        data,
+        xField: 'date',
+        yField: 'value',
+        seriesField: 'country',
+        slider: {
+          start: 0.1,
+          end: 0.9,
+        },
+      };
+    
+    return(
+<Area {...config} />
+    )
+}
+
+export default Line

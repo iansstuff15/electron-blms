@@ -1,0 +1,36 @@
+.container{
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    align-items: center;
+    
+    min-height: 50vw;
+    padding: 1rem 10vw ;
+    background-repeat:no-repeat;
+    background-size:cover;
+    background-position:center;
+    background-color: rgb(39, 39, 39);
+    background-blend-mode:soft-light;
+    h1{
+      display: inline-block;
+      margin-left: 3rem;
+     color: white;
+     font-size: 4.5rem;
+    }
+    h2{
+        margin: 0;
+        font-size: 3rem;
+        font-weight: 700;
+        line-height: 3.5rem;
+        color: #1578D1;
+       
+    }
+    h3{
+        margin: 0;
+    }
+    form{
+        width: 80%;
+        background-color: white;
+        padding: 3rem 4rem;
+        border-radius: 1rem;
+    }
+}

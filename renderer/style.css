@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+:root {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+
+  color: #0f0f0f;
+  background-color: #f6f6f6;
+ 
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  
+ 
+}
+
+body{
+  overflow: hidden;
+ 
+}
+.title_bar{
+  width: 100vw;
+  position: fixed;
+  -webkit-app-region: drag;
+}
+.ant-card{
+  overflow: hidden;
+}
+*{
+  padding: 0;
+  margin: 0;
+}
