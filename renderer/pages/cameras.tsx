@@ -1,6 +1,6 @@
 import AppLayout from "../components/layout";
 import * as tf from '@tensorflow/tfjs';
-import { Avatar, Button, Card, Col, List, Row, Segmented, Space, Statistic, Timeline } from 'antd';
+import { Avatar, Button, Card, Col, DatePicker, DatePickerProps, List, Row, Segmented, Space, Statistic, Timeline } from 'antd';
 import styles from '../styles/home.module.scss'
 import Webcam from "react-webcam";
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
@@ -8,16 +8,29 @@ import { EditOutlined,EllipsisOutlined,SettingOutlined } from '@ant-design/icons
 import Line from "../components/charts/line";
 import { useRouter } from "next/router";
 import * as cocossd from '@tensorflow-models/coco-ssd'
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { drawRect } from "../components/utilities";
 import dynamic from 'next/dynamic';
+import { DocumentData, DocumentSnapshot, doc, onSnapshot, FieldValue, collection } from 'firebase/firestore';
+import { db } from "../firebase";
+import dayjs from 'dayjs';
+import { CSVLink, CSVDownload } from "react-csv";
 const Meta = dynamic(() => import('antd/es/card/Meta'), {
   ssr: false,
 }) ;
 const App: React.FC = () => {
 const webcamRef = useRef(null)
 const canvasRef = useRef(null)
+const [cameraInfo,setCameraInfo] = useState<DocumentData>()
+const [objectInfo,setObjectInfo] = useState<DocumentData[]>()
+const [personCount,setPersonCount] = useState(0)
+const [bicycleCount,setBicycleCount] = useState(0)
+const [motorcycleCount,setMotorcycleCount] = useState(0)
+const [carsCount,setCarsCount] = useState(0)
 
+
+const now = new Date()
+const [currentDate, setCurrentDate] = useState('')
 const runCoco = async()=>{
   const network = await cocossd.load();
   setInterval(()=>{
@@ -52,15 +65,62 @@ const detect = async(network: cocossd.ObjectDetection) =>{
     drawRect(obj, ctx); 
   }
 }
-
+const cameraRef = doc(db, 'cameras',"Camera 1")
+const objectRef = collection(cameraRef, `2023-3-23`)
+const onChangeDatePicker: DatePickerProps['onChange'] = (date, dateString) => {
+  
+  
+  setCurrentDate(dateString)
+  console.log("currentDate")
+  console.log(currentDate)
+};
 useEffect(()=>{
-  tf.setBackend('cpu');
+  tf.setBackend('gpu');
   console.log(tf.getBackend());
+ 
+  onSnapshot(cameraRef, (doc) => {
+    let tempData:DocumentData
+    console.log("Current data: ", doc.data());
+ 
+    tempData=doc.data()
+    setCameraInfo(tempData)
+    console.log("Camera Info")
+    console.log(cameraInfo)
+});
 
-},[])
+onSnapshot(objectRef, (doc) => {
+
+  console.log("Object Info")
+   const tempData =doc.docs.map((doc) =>doc.data())
+   console.log("tempData")
+     console.log(tempData)
+  setObjectInfo(tempData?tempData
+    // .filter((data) => currentDate == `${data.created.toDate().getMonth( )>9? '':0}${data.created.toDate().getMonth( )+1 }-${data.created.toDate().getDate() }-${data.created.toDate().getFullYear()}`) 
+    : [])
+
+ setPersonCount( tempData.filter((data) => data.class == "person" 
+//  && currentDate == currentDate?currentDate:`${data.created.toDate().getMonth( )>9? '':0}${data.created.toDate().getMonth( )+1 }-${data.created.toDate().getDate() }-${data.created.toDate().getFullYear()}`
+ ).length 
+ )
+ setBicycleCount( tempData.filter((data) => data.class == "bicycle" 
+//  && currentDate == `${data.created.toDate().getMonth( )>9? '':0}${data.created.toDate().getMonth( )+1 }-${data.created.toDate().getDate() }-${data.created.toDate().getFullYear()}`
+ ).length)
+ setCarsCount( tempData.filter((data) => data.class == "car"
+  // && currentDate == `${data.created.toDate().getMonth( )>9? '':0}${data.created.toDate().getMonth( )+1 }-${data.created.toDate().getDate() }-${data.created.toDate().getFullYear()}`
+  ).length)
+ setMotorcycleCount( tempData.filter((data) => data.class == "motorcycle"
+  // && currentDate == `${data.created.toDate().getMonth( )>9? '':0}${data.created.toDate().getMonth( )+1 }-${data.created.toDate().getDate() }-${data.created.toDate().getFullYear()}`
+  ).length)
+ console.log(objectInfo)
+ 
+});
+
+
+} )
 useEffect(()=>{
  
   runCoco()
+
 },[])
 const router = useRouter()
   return (
@@ -69,24 +129,8 @@ const router = useRouter()
   <Card style={{margin:"1rem 0",height:"fit-content", }} title={'Brgy. Hall/ L. Jaena Camera 1'}>
   <Row>
     <Col span={18} push={6}>
-    <Webcam
-          ref={webcamRef}
-          muted={true} 
-          style={{
-            position: "absolute",
-            marginLeft: "auto",
-            marginRight: "auto",
-            left: 0,
-            right: 0,
-            textAlign: "center",
-            zIndex: 1,
-            width: 640,
-            height: 480,
-            opacity:0.5
-          }}
-        />
-
-        <canvas
+      
+    <canvas
           ref={canvasRef}
           style={{
             position: "absolute",
@@ -100,6 +144,23 @@ const router = useRouter()
             height: 480,
           }}
         />
+    <Webcam
+          ref={webcamRef}
+          muted={true} 
+          style={{
+            position: "absolute",
+            marginLeft: "auto",
+            marginRight: "auto",
+            left: 0,
+            right: 0,
+            textAlign: "center",
+            zIndex: 1,
+            width: 640,
+            height: 480,
+           
+          }}
+        />
+
     
     </Col>
     <Col span={6} pull={18}>
@@ -110,18 +171,21 @@ const router = useRouter()
 
     <Row gutter={16}>
     <Col span={12}>
-      <Statistic title="Bicycle" value={112893}/>
+      <Statistic title="Bicycle" value={bicycleCount}/>
     </Col>
     <Col span={12}>
-      <Statistic title="Cars" value={112893} precision={2} />
+      <Statistic title="Cars" value={carsCount}  />
     </Col>
     <Col span={12}>
-      <Statistic title="Persons" value={112893} precision={2} />
+      <Statistic title="Persons" value={personCount}  />
     </Col>
     <Col span={12}>
-      <Statistic title="Motorcycle" value={112893} precision={2} />
+      <Statistic title="Motorcycle" value={motorcycleCount}  />
     </Col>
   </Row>
+  {/* <h4>Filter</h4>
+  <DatePicker defaultValue={dayjs(now)} style={{width:"100%"}} format={"MM-DD-YYYY"} onChange={onChangeDatePicker} /> */}
+
   <Timeline
   style={{
     overflowY:'scroll',
@@ -131,63 +195,18 @@ const router = useRouter()
     fontSize:'.4rem'
   }}
     mode={"left"}
-    items={[
-      {
-        label: '2015-09-01',
-        children: 'Create a services',
-      },
-      {
-        label: '2015-09-01 09:12:11',
-        children: 'Solve initial network problems',
-      },
-      {
-        label: '2015-09-01',
-        children: 'Technical testing',
-      },
-      {
-        label: '2015-09-01 09:12:11',
-        children: 'Network problems being solved',
-      },
-      {
-        label: '2015-09-01 09:12:11',
-        children: 'Network problems being solved',
-      },
-      {
-        label: '2015-09-01 09:12:11',
-        children: 'Network problems being solved',
-      },
-      {
-        label: '2015-09-01 09:12:11',
-        children: 'Network problems being solved',
-      },
-      {
-        label: '2015-09-01 09:12:11',
-        children: 'Network problems being solved',
-      },
-      {
-        label: '2015-09-01 09:12:11',
-        children: 'Network problems being solved',
-      },
-      {
-        label: '2015-09-01 09:12:11',
-        children: 'Network problems being solved',
-      },
-      {
-        label: '2015-09-01 09:12:11',
-        children: 'Network problems being solved',
-      },
-      {
-        label: '2015-09-01 09:12:11',
-        children: 'Network problems being solved',
-      },
-      {
-        label: '2015-09-01 09:12:11',
-        children: 'Network problems being solved',
-      },
-    ]}
+    items={  objectInfo? objectInfo.map((data)=>{return({
+      label: `${data.created.toDate().getMonth( )+1 }/${data.created.toDate().getDate() }/${data.created.toDate().getFullYear()}  ${data.created.toDate().getHours() }:${data.created.toDate().getMinutes() }`,
+      children: data.class
+    })}):[]
+  }
   />
   <Button type="primary"  block>
-    Generate report
+  <CSVLink filename='camera1.csv' data={  objectInfo? objectInfo.map((data)=>{return({
+      label: data.created? `${data.created.toDate().getMonth( )+1 }/${data.created.toDate().getDate() }/${data.created.toDate().getFullYear()}  ${data.created.toDate().getHours() }:${data.created.toDate().getMinutes() }` : null,
+      children: data.class
+    })}):[]
+  }> Generate report</CSVLink>
   </Button>
   </Space>
  

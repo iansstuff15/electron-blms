@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithPopup } from "firebase/auth";
-import { doc, getFirestore, setDoc } from "firebase/firestore";
+import { getAuth, setPersistence, signInWithPopup,browserLocalPersistence, signInWithEmailAndPassword } from "firebase/auth";
+import { FieldValue, Timestamp, addDoc, collection, doc, getFirestore, setDoc } from "firebase/firestore";
 import { GoogleAuthProvider } from "firebase/auth";
 
 const provider = new GoogleAuthProvider();
@@ -24,12 +24,47 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth()
 export const db = getFirestore()
+// setPersistence(auth, browserLocalPersistence)
+//   .then(() => {
+//     // Existing and future Auth states are now persisted in the current
+//     // session only. Closing the window would clear any existing state even
+//     // if a user forgets to sign out.
+//     // ...
+  
+//   })
+//   .catch((error) => {
+//     // Handle Errors here.
+//     const errorCode = error.code;
+//     const errorMessage = error.message;
+    
+//   });
+  
 export const registerUserToFirestore  = (docUID,data) =>{
 
 
     const docRef = doc(db, 'users',docUID)
     setDoc(docRef,data)
   }
+
+  export const logObjects  = (cameraUID:string,cameraData:{
+    name:string,
+    created:FieldValue,
+    location:string,
+  },objectUID:string,objectData:{
+    bbox:Array<number>,
+    class:string,
+    score:number,
+    created:FieldValue,
+  }) =>{
+ 
+      const cameraRef = doc(db, 'cameras',cameraUID)
+      setDoc(cameraRef,cameraData)
+      const objectRef = collection(cameraRef,objectUID)
+      addDoc(objectRef,objectData)
+    
+
+  }
+
 
   export const googleSignup =()=> signInWithPopup(auth, provider)
   .then((result) => {
